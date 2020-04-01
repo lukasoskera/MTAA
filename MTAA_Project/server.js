@@ -106,6 +106,89 @@ const deleteNews = (request, response) => {
   })
 }
 
+const getEvents = (request, response) => {
+  pool.query('SELECT * FROM events ORDER BY id DESC', (error, results) => {
+    if (error) {
+      throw error
+    }
+    response.status(200).json(results.rows)
+  })
+}
+
+const getEventId = (request, response) => {
+  const id = parseInt(request.params.id)
+
+  pool.query('SELECT * FROM events WHERE id = $1', [id], (error, results) => {
+    if (error) {
+      throw error
+    }
+    response.status(200).json(results.rows)
+  })
+}
+
+const createEvent = (request, response) => {
+  const {title, when_date, when_time, capacity, points, type, adress, description, modified, creator} = request.body
+
+  pool.query('INSERT INTO events (title, when_date, when_time, capacity, points, type, adress, description, modified, creator) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [title, when_date, when_time, capacity, points, type, adress, description, modified, creator], (error, results) => {
+    if (error) {
+      throw error
+    }
+    console.log(results)
+    response.status(201).send(`Event added with ID: ${results.insertId}`)
+  })
+}
+
+const updateEvent = (request, response) => {
+  const id = parseInt(request.params.id)
+  const {title} = request.body
+
+  pool.query(
+    'UPDATE events SET points = $1 WHERE id = $2',
+    [points, id],
+    (error, results) => {
+      if (error) {
+        throw error
+      }
+      response.status(200).send(`Event modified with ID: ${id}`)
+    }
+  )
+}
+
+const deleteEvent = (request, response) => {
+  const id = parseInt(request.params.id)
+
+  pool.query('DELETE FROM events WHERE id = $1', [id], (error, results) => {
+    if (error) {
+      throw error
+    }
+    response.status(200).send(`Event deleted with ID: ${id}`)
+  })
+}
+
+const getParticipants = (request, response) => {
+  const id = parseInt(request.params.id)
+
+  pool.query('SELECT count(id_event) FROM participation WHERE id_event = $1', [id], (error, results) => {
+    if (error) {
+      throw error
+    }
+    response.status(200).json(results.rows)
+  })
+}
+
+const addParticipant = (request, response) => {
+  const {id_event, id_user} = request.body
+
+  pool.query('INSERT INTO participants (id_event, id_user) VALUES ($1,$2)', [id_event, id_user], (error, results) => {
+    if (error) {
+      throw error
+    }
+    console.log(results)
+    response.status(201).send(`Event added with ID: ${results.insertId}`)
+  })
+}
+
+
   module.exports = {
     getNews,
     getNewsId,
@@ -117,4 +200,11 @@ const deleteNews = (request, response) => {
     deleteNews,
     //updateUser,
     //deleteUser,
+    getEvents,
+    getEventId,
+    createEvent,
+    updateEvent,
+    deleteEvent,
+    getParticipants,
+    addParticipant
   }
