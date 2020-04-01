@@ -23,6 +23,13 @@ app.post('/news', db.createNews)
 app.put('/users/:id', db.updateProfile)
 app.put('/news/:id', db.updateNews)
 app.delete('/news/:id', db.deleteNews)
+app.get('/events', db.getEvents)
+app.get('/events/:id', db.getEventId)
+app.post('/events', db.createEvent)
+app.put('/events/:id', db.updateEvent)
+app.delete('/events/:id', db.deleteEvent)
+app.get('/participation/:id', db.getParticipants)
+app.post('/participation/:id', db.addParticipant)
 
 
 app.listen(port, () => {
