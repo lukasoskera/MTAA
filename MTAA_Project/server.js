@@ -52,12 +52,16 @@ const getProfile = (request, response) => {
 }
 
 const createNews = (request, response) => {
+
+  //chcek id validity ( ci je admin, pokial nie - > 403 ) -> pokial nieje prihlaseny -> global_ID == NULL
+  //chcek validity je vlastne select rights from users where id==global_ID -> if rights==1 tak je admin
   const {title, description, created_at, author} = request.body
 
   pool.query('INSERT INTO news (title, description, created_at, author) VALUES ($1,$2,$3,$4)', [title, description, created_at, author], (error, results) => {
     if (error) {
       throw error
     }
+    //get clanok pre zobrazenie
     console.log(results)
     response.status(201).send(`News added with ID: ${results.insertId}`)
   })
@@ -81,11 +85,13 @@ const updateProfile = (request, response) => {
 
 const updateNews = (request, response) => {
   const id = parseInt(request.params.id)
-  const {title} = request.body
-
+  const {description} = request.body
+  //chek ci som prihlaseny&&som autor udalosti
+  //over ci description nieje null pripadne ci sa  nerovna '' -> ak sa rovna tak ERROR
+  //bez ohladu na to ci je prazdny alebo nie, treba getnut clanok ktory chcel menit
   pool.query(
-    'UPDATE news SET title = $1 WHERE id = $2',
-    [title, id],
+    'UPDATE news SET description = $1 WHERE id = $2',
+    [description, id],
     (error, results) => {
       if (error) {
         throw error
@@ -141,7 +147,11 @@ const createEvent = (request, response) => {
 const updateEvent = (request, response) => {
   const id = parseInt(request.params.id)
   const {title} = request.body
-
+  //chek ci som prihlaseny&&som autor udalosti
+  //ak si aj aj, tak get na udalost ktoru chcem zmenit, checknem jej kapacitu!!! -> nie maximalnu kapacitu, ale kolko ludi sa uz prihlasilo
+  //kolko ludi sa uz prihlasilo -> select sum(*) from particiaption where event_id = to co chcem menit
+  //zisti ci cislo na ktor chcem kapacitu zmenit nieje mensie ako pocet uz prihlasenych, ak je mensie -> ERROR
+  //ak sa zmeni ci nezmeni, daj select na konkretu udalost pre zobrzenie
   pool.query(
     'UPDATE events SET points = $1 WHERE id = $2',
     [points, id],
@@ -178,7 +188,8 @@ const getParticipants = (request, response) => {
 
 const addParticipant = (request, response) => {
   const {id_event, id_user} = request.body
-
+  //chcek prihlasenia + vkladame global_ID
+  //get n udlost kvoli jej zobrazeniu
   pool.query('INSERT INTO participants (id_event, id_user) VALUES ($1,$2)', [id_event, id_user], (error, results) => {
     if (error) {
       throw error
@@ -190,6 +201,9 @@ const addParticipant = (request, response) => {
 
 
   module.exports = {
+    //upladPic
+    //getPic
+    //getUsers -> v nom bude autentifikacia a zaroven nacitanie vsetkych clankov
     getNews,
     getNewsId,
     getProfile,
@@ -198,8 +212,6 @@ const addParticipant = (request, response) => {
     updateProfile,
     updateNews,
     deleteNews,
-    //updateUser,
-    //deleteUser,
     getEvents,
     getEventId,
     createEvent,
