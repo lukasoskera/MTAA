@@ -18,6 +18,7 @@ app.get('/', (request, response) => {
 app.get('/news', db.getNews)
 app.get('/news/:id', db.getNewsId)
 app.get('/users/:id', db.getProfile)
+app.get('/users/:username:password', db.getUser)  //toto neviem, ci sa to takto pise 
 app.post('/users', db.createUser)
 app.post('/news', db.createNews)
 app.put('/users/:id', db.updateProfile)
