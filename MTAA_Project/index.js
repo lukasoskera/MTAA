@@ -18,10 +18,10 @@ app.get('/', (request, response) => {
 app.get('/news', db.getNews)
 app.get('/news/:id', db.getNewsId)
 app.get('/users/:id', db.getProfile)
-app.get('/users/:username:password', db.getUser)  //toto neviem, ci sa to takto pise 
+app.get('/users/:username/:password', db.getUser)  //toto neviem, ci sa to takto pise 
 app.post('/users', db.createUser)
 app.post('/news', db.createNews)
-app.put('/users/:id', db.updateProfile)
+app.put('/users', db.updateProfile)
 app.put('/news/:id', db.updateNews)
 app.delete('/news/:id', db.deleteNews)
 app.get('/events', db.getEvents)
@@ -30,7 +30,9 @@ app.post('/events', db.createEvent)
 app.put('/events/:id', db.updateEvent)
 app.delete('/events/:id', db.deleteEvent)
 app.get('/participation/:id', db.getParticipants)
-app.post('/participation/:id', db.addParticipant)
+app.post('/participation', db.addParticipant)
+app.post('/image',db.uploadImage)
+app.get('/image/:id', db.getImage)
 
 
 
