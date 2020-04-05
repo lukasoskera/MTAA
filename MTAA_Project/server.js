@@ -283,6 +283,21 @@ const updateEvent = (request, response) => {
   //zadanie konkretnej udalosti, ktoru chceme menit
   const id_event = parseInt(request.params.id)
   const {capacity} = request.body
+  
+  //NEVIEM KTORA Z TYCHTO MOZNOSTI FUNGUJE... ASI TO MUSIS SPUSTIT
+  //check, ci udalost existuje
+  if(pool.query('SELECT id FROM events WHERE id = $1', [id_event]) == null) {
+    response.status(400).send('Event neexistuje.')
+  }
+
+  //check, ci udalost existuje
+  pool.query('SELECT id FROM events WHERE id = $1', [id_event], (error, results) => {
+    if (error) {
+      throw error 
+    }
+  })
+  //JEDNA Z HORNYCH MOZNOSTI.... 
+    
 
   //check, ci  je prihlaseny 
   if(global_user == null) {
@@ -347,7 +362,7 @@ const deleteEvent = (request, response) => {
 const getParticipants = (request, response) => {
   const id = parseInt(request.params.id)
 
-  pool.query('SELECT count(id_event) FROM participation WHERE id_event = $1', [id], (error, results) => {
+  pool.query('SELECT id_user, (SELECT username FROM users WHERE participation.id_user = users.id) FROM participation WHERE id_event = $1', [id], (error, results) => {
     if (error) {
       throw error
     }
