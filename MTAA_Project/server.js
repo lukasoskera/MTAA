@@ -279,61 +279,57 @@ const createEvent = (request, response) => {
   }
 }
 
+//HOTOVO
 const updateEvent = (request, response) => {
   //zadanie konkretnej udalosti, ktoru chceme menit
   const id_event = parseInt(request.params.id)
   const {capacity} = request.body
   
-  //NEVIEM KTORA Z TYCHTO MOZNOSTI FUNGUJE... ASI TO MUSIS SPUSTIT
-  //check, ci udalost existuje
-  if(pool.query('SELECT id FROM events WHERE id = $1', [id_event]) == null) {
-    response.status(400).send('Event neexistuje.')
-  }
-
-  //check, ci udalost existuje
-  pool.query('SELECT id FROM events WHERE id = $1', [id_event], (error, results) => {
-    if (error) {
-      throw error 
-    }
-  })
-  //JEDNA Z HORNYCH MOZNOSTI.... 
-    
-
   //check, ci  je prihlaseny 
   if(global_user == null) {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
   }
-  //check, ci je creator toho eventu 
+  //check, ci udalost existuje
   else{
-    pool.query('SELECT creator FROM events WHERE id = $1', [id_event], (error, results) => {
-      if (error) {
-        throw error
-      }
-      if(results.rows[0].creator != global_user){
-        response.status(403).send('Pouzivatel nie je autorom udalosti.')
-      }
-      //ak je prihlaseny a je creator tak moze zmenit
-      else{ 
-        //zistenie, ci zmenena kapacita je vacsia ako aktualna ucast na evente
-        pool.query('SELECT count(id_event) FROM participation WHERE id_event = $1', [id_event], (error, results) => {
-          if (error) {
-            throw error
-          }
-          if (Number(results.rows[0].count) < Number(capacity)) {
-            pool.query('UPDATE events SET capacity = $1 WHERE id = $2', [capacity, id_event], (error, results) => {
-                if (error) {
-                  throw error
-                }
-                response.status(200).send(`Event modified with ID: ${id_event}`)
-            })
-          }
-          else {
-            response.status(400).send('Nejde znizit kapacitu pre limit prihlasenych.')
-          }
-        })
-      }
-    })  
-  }
+  pool.query('SELECT * FROM events WHERE id = $1', [id_event], (error, results) => {
+    if (error) {
+      throw error 
+    }
+    if(typeof response.rows === "undefined"){
+      response.status(400).send('Event neexistuje.')
+    }
+    else{
+      pool.query('SELECT creator FROM events WHERE id = $1', [id_event], (error, results) => {
+        if (error) {
+          throw error
+        }
+        if(results.rows[0].creator != global_user){
+          response.status(403).send('Pouzivatel nie je autorom udalosti.')
+        }
+        //ak je prihlaseny a je creator tak moze zmenit
+        else{ 
+          //zistenie, ci zmenena kapacita je vacsia ako aktualna ucast na evente
+          pool.query('SELECT count(id_event) FROM participation WHERE id_event = $1', [id_event], (error, results) => {
+            if (error) {
+              throw error
+            }
+            if (Number(results.rows[0].count) < Number(capacity)) {
+              pool.query('UPDATE events SET capacity = $1 WHERE id = $2', [capacity, id_event], (error, results) => {
+                  if (error) {
+                    throw error
+                  }
+                  response.status(200).send(`Event modified with ID: ${id_event}`)
+              })
+            }
+            else {
+              response.status(400).send('Nejde znizit kapacitu pre limit prihlasenych.')
+            }
+          })
+        }
+      })  
+    }
+  })   
+}
 }
 
 //HOTOVO
@@ -358,7 +354,7 @@ const deleteEvent = (request, response) => {
   })
 }
 
-
+//HOTOVO
 const getParticipants = (request, response) => {
   const id = parseInt(request.params.id)
 
