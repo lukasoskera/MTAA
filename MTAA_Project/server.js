@@ -374,18 +374,27 @@ const addParticipant = (request, response) => {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
   }
   else{
-    pool.query('INSERT INTO participation (id_user,id_event) VALUES ($1,$2)',[global_user, id], (error, results) => {
+    pool.query('SELECT * FROM participants WHERE id_user = $1', [global_user], (error, results) => {
       if (error) {
-        throw error
+        throw error 
       }
-      pool.query('SELECT * FROM participation ORDER BY id DESC LIMIT 1', (error, results) => {
-        if (error) {
-          throw error
-        }
-        console.log(results.rows)
-        response.status(201).json(`Pouziatel ${results.rows[0].id_user} bol pridany do eventu: ${results.rows[0].id_event}`)
-      })    
-    })
+      if(typeof response.rows === "undefined"){
+        pool.query('INSERT INTO participation (id_user,id_event) VALUES ($1,$2)',[global_user, id], (error, results) => {
+          if (error) {
+            throw error
+          }
+          pool.query('SELECT * FROM participation ORDER BY id DESC LIMIT 1', (error, results) => {
+            if (error) {
+              throw error
+            }
+            console.log(results.rows)
+            response.status(201).json(`Pouziatel ${results.rows[0].id_user} bol pridany do eventu: ${results.rows[0].id_event}`)
+          })    
+        }) 
+      }
+    else {    
+       response.status(400).send('Pouzivatel uz ma ucast na evente.')
+    }
   }
 }
 
