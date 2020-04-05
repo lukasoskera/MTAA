@@ -169,37 +169,44 @@ const updateNews = (request, response) => {
   const id = parseInt(request.params.id)
   const {description} = request.body
 
-   //check, ci  je prihlaseny 
-   if(global_user == null) {
+  //check, ci  je prihlaseny 
+  if(global_user == null) {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
   }
-  //check, ci je creator toho eventu 
+  //check, ci news existuje
   else{
-    pool.query('SELECT author FROM news WHERE id = $1', [id], (error, results) => {
+    pool.query('SELECT * FROM news WHERE id = $1', [id], (error, results) => {
       if (error) {
-        throw error
+        throw error 
       }
-      console.log(results)
-      if(results.rows[0].author != global_user){
-        response.status(403).send('Pouzivatel nie je autorom clanku.')
+      if(typeof response.rows === "undefined"){
+        response.status(400).send('News neexistuje.')
       }
-      //ak je prihlaseny a je creator tak moze zmenit
-      else{ 
-        if(description == ''){
-          response.status(400).send('Clanok nesmie byt prazdny.')
-        }
-        else{
-        pool.query(
-          'UPDATE news SET description = $1 WHERE id = $2',
-          [description, id],
-          (error, results) => {
-            if (error) {
-              throw error
-            }
-            response.status(200).send(`News modified with ID: ${id}`)
+      //check, ci je creator toho eventu 
+      else{
+        pool.query('SELECT author FROM news WHERE id = $1', [id], (error, results) => {
+          if (error) {
+            throw error
           }
-        )
-        }
+          console.log(results)
+          if(results.rows[0].author != global_user){
+            response.status(403).send('Pouzivatel nie je autorom clanku.')
+          }
+          //ak je prihlaseny a je creator tak moze zmenit
+          else{ 
+            if(description == ''){
+              response.status(400).send('Clanok nesmie byt prazdny.')
+            }
+            else{
+              pool.query('UPDATE news SET description = $1 WHERE id = $2', [description, id], (error, results) => {
+                if (error) {
+                  throw error
+                }
+                response.status(200).send(`News modified with ID: ${id}`)
+              })
+            }
+          }
+        })
       }
     })
   }
@@ -212,24 +219,35 @@ const deleteNews = (request, response) => {
   if(global_user == null) {
     console.log('Pouzivatel nie je prihlaseny.')
   }
-  
-  pool.query('SELECT author FROM news WHERE id = $1', [id],(error, results) => {
+  //check, ci news existuje
+  else{
+  pool.query('SELECT * FROM news WHERE id = $1', [id], (error, results) => {
     if (error) {
-      throw error
+      throw error 
     }
-    if(results.rows[0].author != global_user){
-      response.status(403).send(`Pouzivatel nie je autorom clanku.`)
-    }
-    else{
-      pool.query('DELETE FROM news WHERE id = $1', [id], (error, results) => {
+    if(typeof response.rows === "undefined"){
+      response.status(400).send('News neexistuje.')
+    }  
+   else { 
+      pool.query('SELECT author FROM news WHERE id = $1', [id],(error, results) => {
         if (error) {
           throw error
         }
-        response.status(200).send(`News deleted with ID: ${id}`)
+        if(results.rows[0].author != global_user){
+          response.status(403).send(`Pouzivatel nie je autorom clanku.`)
+        }
+        else{
+          pool.query('DELETE FROM news WHERE id = $1', [id], (error, results) => {
+            if (error) {
+              throw error
+            }
+            response.status(200).send(`News deleted with ID: ${id}`)
+          })
+        }
       })
-    }
-  })
- 
+     }
+    })
+  }
 }
 
 //HOTOVO
@@ -335,20 +353,31 @@ const updateEvent = (request, response) => {
 //HOTOVO
 const deleteEvent = (request, response) => {
   const id = parseInt(request.params.id)
-
-  pool.query('SELECT creator FROM events WHERE id = $1', [id], (error, results) => {
+  
+  //check, ci udalost existuje
+  pool.query('SELECT * FROM events WHERE id = $1', [id_event], (error, results) => {
     if (error) {
-      throw error
+      throw error 
     }
-    if(global_user != results.rows[0].creator){
-      response.status(403).send(`Pouzivatel nieje autorom udalosti`)
+    if(typeof response.rows === "undefined"){
+      response.status(400).send('Event neexistuje.')
     }
-    else{
-      pool.query('DELETE FROM events WHERE id = $1', [id], (error, results) => {
+    else {  
+      pool.query('SELECT creator FROM events WHERE id = $1', [id], (error, results) => {
         if (error) {
           throw error
         }
-        response.status(200).send(`Event deleted with ID: ${id}`)
+        if(global_user != results.rows[0].creator){
+          response.status(403).send(`Pouzivatel nieje autorom udalosti`)
+        }
+        else{
+          pool.query('DELETE FROM events WHERE id = $1', [id], (error, results) => {
+            if (error) {
+              throw error
+            }
+            response.status(200).send(`Event deleted with ID: ${id}`)
+          })
+        }
       })
     }
   })
@@ -373,27 +402,39 @@ const addParticipant = (request, response) => {
   if(global_user == null) {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
   }
+  //check, ci event existuje
   else{
-    pool.query('SELECT * FROM participants WHERE id_user = $1', [global_user], (error, results) => {
+    pool.query('SELECT * FROM events WHERE id = $1', [id], (error, results) => {
       if (error) {
         throw error 
       }
       if(typeof response.rows === "undefined"){
-        pool.query('INSERT INTO participation (id_user,id_event) VALUES ($1,$2)',[global_user, id], (error, results) => {
+        response.status(400).send('Event neexistuje.')
+      } 
+      else{
+        //zistenie, ci uz user ma ucast na evente
+        pool.query('SELECT * FROM participants WHERE id_user = $1', [global_user], (error, results) => {
           if (error) {
-            throw error
+            throw error 
           }
-          pool.query('SELECT * FROM participation ORDER BY id DESC LIMIT 1', (error, results) => {
-            if (error) {
-              throw error
-            }
-            console.log(results.rows)
-            response.status(201).json(`Pouziatel ${results.rows[0].id_user} bol pridany do eventu: ${results.rows[0].id_event}`)
-          })    
-        }) 
-      }
-      else {    
-        response.status(400).send('Pouzivatel uz ma ucast na evente.')
+          if(typeof response.rows === "undefined"){
+            pool.query('INSERT INTO participation (id_user,id_event) VALUES ($1,$2)',[global_user, id], (error, results) => {
+              if (error) {
+                throw error
+              }
+              pool.query('SELECT * FROM participation ORDER BY id DESC LIMIT 1', (error, results) => {
+                if (error) {
+                  throw error
+                }
+                console.log(results.rows)
+                response.status(201).json(`Pouziatel ${results.rows[0].id_user} bol pridany do eventu: ${results.rows[0].id_event}`)
+              })    
+            }) 
+          }
+          else {    
+            response.status(400).send('Pouzivatel uz ma ucast na evente.')
+          }
+        })
       }
     })
   }
