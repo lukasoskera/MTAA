@@ -392,9 +392,10 @@ const addParticipant = (request, response) => {
           })    
         }) 
       }
-    else {    
-       response.status(400).send('Pouzivatel uz ma ucast na evente.')
-    }
+      else {    
+        response.status(400).send('Pouzivatel uz ma ucast na evente.')
+      }
+    })
   }
 }
 
