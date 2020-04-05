@@ -355,7 +355,7 @@ const deleteEvent = (request, response) => {
   const id = parseInt(request.params.id)
   
   //check, ci udalost existuje
-  pool.query('SELECT * FROM events WHERE id = $1', [id_event], (error, results) => {
+  pool.query('SELECT * FROM events WHERE id = $1', [id], (error, results) => {
     if (error) {
       throw error 
     }
@@ -409,7 +409,7 @@ const addParticipant = (request, response) => {
         throw error 
       }
       if(typeof response.rows === "undefined"){
-        response.status(400).send('Event neexistuje.')
+        response.status(400).send('Pouzivatel uz je pridany.')
       } 
       else{
         //zistenie, ci uz user ma ucast na evente
