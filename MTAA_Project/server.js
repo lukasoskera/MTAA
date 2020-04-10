@@ -67,20 +67,22 @@ const createUser = (request, response) => {
 const getUser = (request, response) => {
   const {username, password} = request.body
   //skontrolovanie, ci najdeme takeho pouzivatela
-  if(pool.query('SELECT * FROM users WHERE username = $1 AND password = $2', [request.params.username, request.params.password]) != null) {
-    pool.query('SELECT * FROM users WHERE username = $1 AND password = $2', [request.params.username, request.params.password], (error, results) => {
-      if (error) {
-        throw error
-      }
-        global_user = results.rows[0].id
-        response.status(200).send("prihlaseny")
-      })
-  }
-  else {
-    response.status(400).send('Nespravne meno alebo heslo.')
-  }
-}
+  pool.query('SELECT * FROM users WHERE username = $1 AND password = $2', [request.params.username, request.params.password], (error, results) => {
+    if (error) {
+      throw error
+    }
 
+    if(Object.keys(results.rows).length === 0)
+    {
+      response.status(400).send('Nespravne meno alebo heslo.')
+    } 
+    else{
+      global_user = results.rows[0].id
+      response.status(200).send("prihlaseny")
+    }
+  })
+}
+  
 //HOTOVO
 const getProfile = (request, response) => {
   const id = parseInt(request.params.id)
@@ -148,7 +150,7 @@ const createNews = (request, response) => {
   }
   //aj je prihlaseny a je admin
   else {
-    const {title, description, created_at, author} = request.body
+    const {title, description, created_at} = request.body
 
     pool.query('INSERT INTO news (title, description, created_at, author) VALUES ($1,$2,$3,$4)', [title, description, created_at, global_user], (error, results) => {
       if (error) {
@@ -313,9 +315,9 @@ const updateEvent = (request, response) => {
     if (error) {
       throw error 
     }
-    if(typeof response.rows === "undefined"){
-      response.status(400).send('Event neexistuje.')
-    }
+    //if(typeof response.rows === "undefined"){
+    //  response.status(400).send('Event neexistuje.')
+    //}
     else{
       pool.query('SELECT creator FROM events WHERE id = $1', [id_event], (error, results) => {
         if (error) {
@@ -408,16 +410,17 @@ const addParticipant = (request, response) => {
       if (error) {
         throw error 
       }
-      if(typeof response.rows === "undefined"){
-        response.status(400).send('Pouzivatel uz je pridany.')
+        if(Object.keys(results.rows).length === 0){
+          response.status(400).send('Event neexistuje.')
       } 
       else{
         //zistenie, ci uz user ma ucast na evente
-        pool.query('SELECT * FROM participants WHERE id_user = $1', [global_user], (error, results) => {
+        pool.query('SELECT * FROM participation WHERE id_user = $1 and id_event = $2', [global_user,id], (error, results) => {
           if (error) {
             throw error 
           }
-          if(typeof response.rows === "undefined"){
+          console.log(results.rows)
+          if(Object.keys(results.rows).length === 0){
             pool.query('INSERT INTO participation (id_user,id_event) VALUES ($1,$2)',[global_user, id], (error, results) => {
               if (error) {
                 throw error
