@@ -48,7 +48,7 @@ const getImage = (request, response) => {
 
 //HOTOVO
 const createUser = (request, response) => {
-    const {username, password, rights, points, adress } = request.body
+    const {username, password, rights, points, adress } = request.query
   
     pool.query('INSERT INTO users (username, password, rights, points, adress) VALUES ($1,$2,$3,$4,$5)', [username, password, rights, points, adress], (error, results) => {
       if (error) {
@@ -97,7 +97,7 @@ const getProfile = (request, response) => {
 
 //HOTOVO
 const updateProfile = (request, response) => {
-  const { username, password } = request.body
+  const {username, password} = request.query
 
    //check, ci  je prihlaseny 
    if(global_user == null) {
@@ -150,7 +150,7 @@ const createNews = (request, response) => {
   }
   //aj je prihlaseny a je admin
   else {
-    const {title, description, created_at} = request.body
+    const {title, description, created_at } = request.query
 
     pool.query('INSERT INTO news (title, description, created_at, author) VALUES ($1,$2,$3,$4)', [title, description, created_at, global_user], (error, results) => {
       if (error) {
@@ -169,7 +169,7 @@ const createNews = (request, response) => {
 //HOTOVO
 const updateNews = (request, response) => {
   const id = parseInt(request.params.id)
-  const {description} = request.body
+  const {description} = request.query
 
   //check, ci  je prihlaseny 
   if(global_user == null) {
@@ -181,7 +181,7 @@ const updateNews = (request, response) => {
       if (error) {
         throw error 
       }
-      if(typeof response.rows === "undefined"){
+      if(Object.keys(results.rows).length === 0) {
         response.status(400).send('News neexistuje.')
       }
       //check, ci je creator toho eventu 
@@ -190,7 +190,7 @@ const updateNews = (request, response) => {
           if (error) {
             throw error
           }
-          console.log(results)
+          // console.log(results)
           if(results.rows[0].author != global_user){
             response.status(403).send('Pouzivatel nie je autorom clanku.')
           }
@@ -219,7 +219,7 @@ const deleteNews = (request, response) => {
   const id = parseInt(request.params.id)
 
   if(global_user == null) {
-    console.log('Pouzivatel nie je prihlaseny.')
+    response.status(403).send('Pouzivatel nie je prihlaseny.')
   }
   //check, ci news existuje
   else{
@@ -227,7 +227,7 @@ const deleteNews = (request, response) => {
     if (error) {
       throw error 
     }
-    if(typeof response.rows === "undefined"){
+    if(Object.keys(results.rows).length === 0) {
       response.status(400).send('News neexistuje.')
     }  
    else { 
@@ -282,10 +282,10 @@ const createEvent = (request, response) => {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
   }
   else {
-    const {title, when_date, when_time, capacity, points, type, adress, description} = request.body
+    const {title, when_date, when_time, capacity, points, type, adress, description} = request.query
     modified = null
     pool.query('INSERT INTO events (title, when_date, when_time, capacity, points, type, adress, description, modified, creator) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', 
-    [title, when_date, when_time, capacity, points, type, adress, description, modified,global_user], (error, results) => {
+    [title, when_date, when_time, capacity, points, type, adress, description, modified, global_user], (error, results) => {
       if (error) {
         throw error
       }
@@ -315,9 +315,9 @@ const updateEvent = (request, response) => {
     if (error) {
       throw error 
     }
-    //if(typeof response.rows === "undefined"){
-    //  response.status(400).send('Event neexistuje.')
-    //}
+    if(Object.keys(results.rows).length === 0) {
+      response.status(400).send('Event neexistuje.')
+    }
     else{
       pool.query('SELECT creator FROM events WHERE id = $1', [id_event], (error, results) => {
         if (error) {
@@ -361,7 +361,7 @@ const deleteEvent = (request, response) => {
     if (error) {
       throw error 
     }
-    if(typeof response.rows === "undefined"){
+    if(Object.keys(results.rows).length === 0) {
       response.status(400).send('Event neexistuje.')
     }
     else {  
@@ -399,7 +399,7 @@ const getParticipants = (request, response) => {
 
 //HOTOVO
 const addParticipant = (request, response) => {
-  const {id} = request.body
+  const {id} = request.query
 
   if(global_user == null) {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
@@ -419,7 +419,7 @@ const addParticipant = (request, response) => {
           if (error) {
             throw error 
           }
-          console.log(results.rows)
+         // console.log(results.rows)
           if(Object.keys(results.rows).length === 0){
             pool.query('INSERT INTO participation (id_user,id_event) VALUES ($1,$2)',[global_user, id], (error, results) => {
               if (error) {
@@ -429,7 +429,7 @@ const addParticipant = (request, response) => {
                 if (error) {
                   throw error
                 }
-                console.log(results.rows)
+               // console.log(results.rows)
                 response.status(201).json(`Pouziatel ${results.rows[0].id_user} bol pridany do eventu: ${results.rows[0].id_event}`)
               })    
             }) 
