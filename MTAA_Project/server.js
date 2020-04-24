@@ -48,7 +48,8 @@ const getImage = (request, response) => {
 
 //HOTOVO
 const createUser = (request, response) => {
-    const {username, password, rights, points, adress } = request.query
+    var obj = JSON.parse(request.body.body)
+    const {username, password, rights, points, adress } = obj
   
     pool.query('INSERT INTO users (username, password, rights, points, adress) VALUES ($1,$2,$3,$4,$5)', [username, password, rights, points, adress], (error, results) => {
       if (error) {
@@ -79,6 +80,7 @@ const getUser = (request, response) => {
     else{
       global_user = results.rows[0].id
       response.status(200).send("prihlaseny")
+      console.log('Prihlaaasenyyyyy')
     }
   })
 }
@@ -97,7 +99,8 @@ const getProfile = (request, response) => {
 
 //HOTOVO
 const updateProfile = (request, response) => {
-  const {username, password} = request.query
+  var obj = JSON.parse(request.body.body)
+  const {username, password} = obj
 
    //check, ci  je prihlaseny 
    if(global_user == null) {
@@ -150,7 +153,8 @@ const createNews = (request, response) => {
   }
   //aj je prihlaseny a je admin
   else {
-    const {title, description, created_at } = request.query
+    var obj = JSON.parse(request.body.body)
+    const {title, description, created_at } = obj
 
     pool.query('INSERT INTO news (title, description, created_at, author) VALUES ($1,$2,$3,$4)', [title, description, created_at, global_user], (error, results) => {
       if (error) {
@@ -169,7 +173,8 @@ const createNews = (request, response) => {
 //HOTOVO
 const updateNews = (request, response) => {
   const id = parseInt(request.params.id)
-  const {description} = request.query
+  var obj = JSON.parse(request.body.body)
+  const {description} = obj
 
   //check, ci  je prihlaseny 
   if(global_user == null) {
@@ -280,9 +285,12 @@ const createEvent = (request, response) => {
   //check, ci  je prihlaseny 
   if(global_user == null) {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
+    console.log('pouzivatel nie je prihlaseny.......')
   }
   else {
-    const {title, when_date, when_time, capacity, points, type, adress, description} = request.query
+    console.log(request.body.body)
+    var obj = JSON.parse(request.body.body)
+    const {title, when_date, when_time, capacity, points, type, adress, description} = obj
     modified = null
     pool.query('INSERT INTO events (title, when_date, when_time, capacity, points, type, adress, description, modified, creator) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', 
     [title, when_date, when_time, capacity, points, type, adress, description, modified, global_user], (error, results) => {
@@ -303,11 +311,13 @@ const createEvent = (request, response) => {
 const updateEvent = (request, response) => {
   //zadanie konkretnej udalosti, ktoru chceme menit
   const id_event = parseInt(request.params.id)
-  const {capacity} = request.body
+  var obj = JSON.parse(request.body.body)
+  const {capacity} = obj
   
   //check, ci  je prihlaseny 
   if(global_user == null) {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
+    console.log('pouzivatel nie je prihlaseny.......')
   }
   //check, ci udalost existuje
   else{
@@ -371,6 +381,7 @@ const deleteEvent = (request, response) => {
         }
         if(global_user != results.rows[0].creator){
           response.status(403).send(`Pouzivatel nieje autorom udalosti`)
+          console.log('pouzivatel nie je prihlaseny.......')
         }
         else{
           pool.query('DELETE FROM events WHERE id = $1', [id], (error, results) => {
