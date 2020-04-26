@@ -13,13 +13,16 @@ const pool = new Pool({
 
 //HOTOVO
 const uploadImage = (request, response) =>{
-  const {id_user,type,name} = request.body
-  subor = name + type
+  var obj = JSON.parse(request.body.body)
+  const {type,name,data} = obj
+  /*console.log(request)
+  const { type,name,data} = request.body
+  subor = name + type*/
 
-  let buff = fs.readFileSync(subor);
-  let udaje = buff.toString('base64');
+  //let buff = fs.readFileSync(subor);
+  //let udaje = buff.toString('base64');
 
-  pool.query('INSERT INTO photos (id_user,type,name,data) VALUES ($1, $2,$3,$4)',[global_user,type,name,udaje], (error, results) => {
+  pool.query('INSERT INTO photos (id_user,type,name,data) VALUES ($1, $2,$3,$4)',[global_user,type,name,data], (error, results) => {
     if (error) {
       throw error
     }
@@ -31,18 +34,25 @@ const uploadImage = (request, response) =>{
 
 //HOTOVO
 const getImage = (request, response) => {
-  const id = parseInt(request.params.id)
+  const id = global_user
 
-  pool.query('SELECT * FROM photos WHERE id = $1', [id], (error, results) => {
+  pool.query('SELECT * FROM photos WHERE id_user = $1', [id], (error, results) => {
     if (error) {
       throw error
     }
-    response.status(200).json(results.rows)
-    console.log(results.rows[0].id)
 
-    let bufferko = new Buffer(results.rows[0].data, 'base64');
-    meno = results.rows[0].name + results.rows[0].type
-    fs.writeFileSync(meno, bufferko);
+    if(Object.keys(results.rows).length === 0)
+    {
+      response.status(400).send('Fotka neexistuje')
+    } 
+    else{
+    response.status(200).json(results.rows)
+    console.log(results.rows[0])
+    }
+
+    //let bufferko = new Buffer(results.rows[0].data, 'base64');
+    //meno = results.rows[0].name + results.rows[0].type
+    //fs.writeFileSync(meno, bufferko);
   })
 }
 
@@ -87,7 +97,7 @@ const getUser = (request, response) => {
   
 //HOTOVO
 const getProfile = (request, response) => {
-  const id = parseInt(request.params.id)
+  const id = global_user
 
   pool.query('SELECT * FROM users WHERE id = $1', [id], (error, results) => {
     if (error) {
@@ -174,7 +184,7 @@ const createNews = (request, response) => {
 const updateNews = (request, response) => {
   const id = parseInt(request.params.id)
   var obj = JSON.parse(request.body.body)
-  const {description} = obj
+  const description = obj.description
 
   //check, ci  je prihlaseny 
   if(global_user == null) {
@@ -221,6 +231,7 @@ const updateNews = (request, response) => {
 
 //HOTOVO
 const deleteNews = (request, response) => {
+  console.log(request.params)
   const id = parseInt(request.params.id)
 
   if(global_user == null) {
@@ -283,6 +294,7 @@ const getEventId = (request, response) => {
 const createEvent = (request, response) => {
   const id = global_user
   //check, ci  je prihlaseny 
+  console.log(request)
   if(global_user == null) {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
     console.log('pouzivatel nie je prihlaseny.......')
@@ -312,7 +324,8 @@ const updateEvent = (request, response) => {
   //zadanie konkretnej udalosti, ktoru chceme menit
   const id_event = parseInt(request.params.id)
   var obj = JSON.parse(request.body.body)
-  const {capacity} = obj
+  console.log(id_event, obj.capacity)
+  const capacity = obj.capacity
   
   //check, ci  je prihlaseny 
   if(global_user == null) {
@@ -326,6 +339,7 @@ const updateEvent = (request, response) => {
       throw error 
     }
     if(Object.keys(results.rows).length === 0) {
+      console.log("neex")
       response.status(400).send('Event neexistuje.')
     }
     else{
@@ -343,6 +357,7 @@ const updateEvent = (request, response) => {
             if (error) {
               throw error
             }
+            console.log(Number(results.rows[0].count), Number(capacity))
             if (Number(results.rows[0].count) < Number(capacity)) {
               pool.query('UPDATE events SET capacity = $1 WHERE id = $2', [capacity, id_event], (error, results) => {
                   if (error) {
@@ -352,6 +367,7 @@ const updateEvent = (request, response) => {
               })
             }
             else {
+              console.log("nejde")
               response.status(400).send('Nejde znizit kapacitu pre limit prihlasenych.')
             }
           })
@@ -410,7 +426,10 @@ const getParticipants = (request, response) => {
 
 //HOTOVO
 const addParticipant = (request, response) => {
-  const {id} = request.query
+  var obj = JSON.parse(request.body.body)
+  const id = obj.id
+  console.log(id)
+  //const {id} = request.body.body
 
   if(global_user == null) {
     response.status(403).send('Pouzivatel nie je prihlaseny.')
@@ -422,7 +441,9 @@ const addParticipant = (request, response) => {
         throw error 
       }
         if(Object.keys(results.rows).length === 0){
+         // console.log(results)
           response.status(400).send('Event neexistuje.')
+          console.log('neex')
       } 
       else{
         //zistenie, ci uz user ma ucast na evente
@@ -447,6 +468,7 @@ const addParticipant = (request, response) => {
           }
           else {    
             response.status(400).send('Pouzivatel uz ma ucast na evente.')
+            console.log('uzma')
           }
         })
       }
